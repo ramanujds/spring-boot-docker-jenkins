@@ -39,6 +39,16 @@ pipeline {
 
 
         }
+
+        stage('Pull and Run Docker Image') {
+            steps {
+                sh 'docker pull ram1uj/springboot-app:latest'
+                sh 'docker rm -f springboot-container || true'
+                sh 'docker run -d -p 5000:8080 --name springboot-container ram1uj/springboot-app:latest'
+                echo 'Docker Container Running on port 8080'
+            }
+            }
+
         }
 
 }
