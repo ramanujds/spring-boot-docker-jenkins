@@ -1,54 +1,35 @@
-pipeline {
-    agent any
+node {
+    def mvnHome = tool 'maven'
 
-    tools {
-        maven "maven"
+    stage('Pull Repository') {
+        git branch: 'main', url: 'https://github.com/ramanujds/spring-boot-docker-jenkins'
+        echo 'Repository Pulled'
     }
 
-    stages {
-        stage('Pull Repository') {
-            steps {
-                git branch: 'main', url: 'https://github.com/ramanujds/spring-boot-docker-jenkins'
-                echo 'Repository Pulled'
-            }
-            }
-        stage('Run unit tests') {
-            steps {
-                sh 'mvn test'
-                echo 'Unit Tests Completed'
-            }
-            }
-        stage('Build docker image') {
-            steps {
-                sh 'docker build -t springboot-app .'
-                echo 'Docker Image Built'
-                sh 'docker images'
-            }
-            }
+    stage('Run unit tests') {
+        sh "${mvnHome}/bin/mvn test"
+        echo 'Unit Tests Completed'
+    }
 
-        stage('Push to DockerHub') {
-            steps {
-                withCredentials([string(credentialsId: 'dockerhub_token', variable: 'dockerhub_token')]) {
-                    sh 'docker login -u ram1uj -p $dockerhub_token'
-                }
-                sh 'docker tag springboot-app ram1uj/springboot-app:latest'
-                sh 'docker push ram1uj/springboot-app:latest'
-                echo 'Docker Image Pushed to DockerHub'
+    stage('Build docker image') {
+        sh 'docker build -t springboot-app .'
+        echo 'Docker Image Built'
+        sh 'docker images'
+    }
 
-                }
-
-
+    stage('Push to DockerHub') {
+        withCredentials([string(credentialsId: 'dockerhub_token', variable: 'dockerhub_token')]) {
+            sh 'docker login -u ram1uj -p $dockerhub_token'
         }
+        sh 'docker tag springboot-app ram1uj/springboot-app:latest'
+        sh 'docker push ram1uj/springboot-app:latest'
+        echo 'Docker Image Pushed to DockerHub'
+    }
 
-        stage('Pull and Run Docker Image') {
-            steps {
-                sh 'docker pull ram1uj/springboot-app:latest'
-                sh 'docker rm -f springboot-container || true'
-                sh 'docker run -d -p 5000:8080 --name springboot-container ram1uj/springboot-app:latest'
-                echo 'Docker Container Running on port 8080'
-            }
-            }
-
-        }
-
+    stage('Pull and Run Docker Image') {
+        sh 'docker pull ram1uj/springboot-app:latest'
+        sh 'docker rm -f springboot-container || true'
+        sh 'docker run -d -p 5000:8080 --name springboot-container ram1uj/springboot-app:latest'
+        echo 'Docker Container Running on port 8080'
+    }
 }
