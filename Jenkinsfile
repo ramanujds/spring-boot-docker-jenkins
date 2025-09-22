@@ -26,7 +26,19 @@ pipeline {
             }
             }
 
+        stage('Push to DockerHub') {
+            steps {
+                withCredentials([string(credentialsId: 'dockerhub_token', variable: 'dockerhub_token')]) {
+                    sh 'docker login -u ram1uj -p $dockerhub_token'
+                }
+                sh 'docker tag springboot-app ram1uj/springboot-app:latest'
+                sh 'docker push ram1uj/springboot-app:latest'
+                echo 'Docker Image Pushed to DockerHub'
 
+                }
+
+
+        }
         }
 
 }
